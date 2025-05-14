@@ -14,20 +14,32 @@ ztna_poc/
 ```
 
 # Instrucciones de uso:
-1. Generar un par cliente:
+1. Crear un entorno virtual de Python:
+   ```bash
+   python3 -m venv venv
+   ```
+2. Activar el entorno virtual:
+   ```bash
+   source venv/bin/activate
+   ```
+3. Instalar las dependencias:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Generar un par cliente:
    ```bash
    openssl genrsa -out client.key 2048
    openssl req -new -x509 -key client.key -out client.crt -subj "/CN=Client1"
    ```
-2. Arrancar el backend:
+5. Arrancar el backend:
    ```bash
    python3 backend.py
    ```
-3. Arrancar el broker:
+6. Arrancar el broker:
    ```bash
    python3 broker.py
    ```
-4. Ejecutar el cliente:
+7. Ejecutar el cliente:
    ```bash
    python3 client.py
    ```
