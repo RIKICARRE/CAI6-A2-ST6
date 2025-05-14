@@ -4,6 +4,7 @@
 *.crt
 *.csr
 *.conf
+*.csv
 
 # Ignorar archivos de caché de Python
 __pycache__/
