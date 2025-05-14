@@ -1,0 +1,10 @@
+{
+    "allowed_clients": [
+      {
+        "cn": "Client1",
+        "roles": ["user"],
+        "devicePosture": "compliant",
+        "location": "hospital"
+      }
+    ]
+  }

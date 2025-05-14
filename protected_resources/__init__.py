@@ -1,0 +1,1 @@
+# Paquete de recursos protegidos para el backend del centro de salud
