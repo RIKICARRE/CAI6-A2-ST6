@@ -1,49 +1,71 @@
+import sys
+import json
+import random
 from ortools.sat.python import cp_model
 
-# Definición de tareas y roles
-tasks = ['T1', 'T2', 'T3', 'T4', 'T5']
-roles = ['PPV','MDF','JEP','DIP','OFA','DLT']
+# Configuración de tareas, roles y reglas
+TASKS = ['T1', 'T2', 'T3', 'T4', 'T5']
+ROLES = ['DG', 'DR', 'DM', 'DE', 'TR', 'TC', 'PS']
+SOD = [('T1','T2'), ('T2','T3'), ('T3','T4')]
+BIND = [('T4','T1'), ('T5','T2')]
+ROLE_PERSONS = {
+    'DG': ['JVG'],
+    'DR': ['HYV'],
+    'DM': ['PGR'],
+    'DE': ['MFE'],
+    'TR': ['GTR', 'LPG', 'RGB', 'HYV', 'BJC'],
+    'TC': ['RGB', 'MDS', 'LPG'],
+    'PS': ['HJR', 'PTS', 'IHP']
+}
 
-# Reglas de separación y binding
-sod = [('T1','T2'), ('T2','T3'), ('T3','T4')]     # DSoD/DBoD
-binding = [('T4','T1'), ('T5','T2')]              # binding-of-duty
 
-# Crear modelo
-model = cp_model.CpModel()
+def solve_for_initiator(initiator_role):
+    model = cp_model.CpModel()
+    x = {(t,r): model.NewBoolVar(f"x_{t}_{r}") for t in TASKS for r in ROLES}
 
-# Variables: x[(t,r)] = 1 si tarea t la ejecuta rol r
-x = {}
-for t in tasks:
-    for r in roles:
-        x[(t,r)] = model.NewBoolVar(f"x_{t}_{r}")
+    # Cada tarea exactamente un rol
+    for t in TASKS:
+        model.Add(sum(x[(t,r)] for r in ROLES) == 1)
 
-# Cada tarea debe asignarse a exactamente un rol
-for t in tasks:
-    model.Add(sum(x[(t,r)] for r in roles) == 1)
+    # DSoD/DBoD
+    for t1,t2 in SOD:
+        for r in ROLES:
+            model.Add(x[(t1,r)] + x[(t2,r)] <= 1)
 
-# Reglas DSoD/DBoD: tareas t1 y t2 no pueden compartir rol
-for t1, t2 in sod:
-    for r in roles:
-        model.Add(x[(t1,r)] + x[(t2,r)] <= 1)
+    # Binding of Duty
+    for tb,base in BIND:
+        for r in ROLES:
+            model.Add(x[(tb,r)] == x[(base,r)])
 
-# Reglas binding: t_bind debe asignarse al mismo rol que t_base
-for t_bind, t_base in binding:
-    for r in roles:
-        model.Add(x[(t_bind,r)] == x[(t_base,r)])
+    # asignar iniciador a T1 si su rol es válido
+    if initiator_role in ROLES:
+        model.Add(x[('T1', initiator_role)] == 1)
 
-# (Opcional) Fairness u otros objetivos: Ejemplo minimizar la carga
-# Si tuvieras datos de carga, podrías modelar un objetivo aquí.
+    # Resolver
+    solver = cp_model.CpSolver()
+    solver.parameters.max_time_in_seconds = 5
+    solver.parameters.random_seed = 12345
+    status = solver.Solve(model)
+    if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+        raise RuntimeError("No se encontró solución de asignación de roles")
 
-# Resolver
-solver = cp_model.CpSolver()
-solver.parameters.max_time_in_seconds = 10
-status = solver.Solve(model)
+    # Asignación de roles
+    assignment_roles = {t: r for t in TASKS for r in ROLES if solver.Value(x[(t,r)])}
 
-if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
-    print("Asignación encontrada:")
-    for t in tasks:
-        for r in roles:
-            if solver.Value(x[(t,r)]) == 1:
-                print(f"  - {t} → {r}")
-else:
-    print("No se encontró ninguna solución válida.")
+    # Mapear a personas
+    assignment_persons = {t: random.choice(ROLE_PERSONS[role])
+                          for t, role in assignment_roles.items()}
+    return assignment_persons
+
+
+def main():
+    if len(sys.argv) != 2:
+        print(f"Uso: {sys.argv[0]} <rol_iniciador>")
+        sys.exit(1)
+    initiator = sys.argv[1]
+    result = solve_for_initiator(initiator)
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == '__main__':
+    main()

@@ -5,6 +5,7 @@
 *.csr
 *.conf
 *.csv
+assignments_persons.json
 
 # Ignorar archivos de caché de Python
 __pycache__/

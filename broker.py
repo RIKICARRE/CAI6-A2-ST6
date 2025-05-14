@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 import os
 import threading
 import time
+import datetime
 
 app = Flask(__name__)
 
@@ -99,8 +100,24 @@ def proxy_resource():
     for attr, val in match.items():
         if attr in ['cn', 'roles']:
             continue
+        if attr == 'timeOfDay':
+            # Validar franja horaria actual
+            ahora = datetime.datetime.now().strftime('%H:%M')
+            valido_hora = False
+            for franja in val:
+                inicio, fin = franja.split('-')
+                if inicio <= ahora <= fin:
+                    valido_hora = True
+                    break
+            if not valido_hora:
+                abort(403, f"Fuera de franja horaria permitida ({val})")
+            continue
         if context.get(attr) != val:
             abort(403, f"Contexto inválido ({attr})")
+    # Verificar roles
+    if 'roles' in match:
+        if 'roles' not in context or not any(r in context['roles'] for r in match['roles']):
+            abort(403, "Rol no autorizado")
 
     # Forward al backend
     backend_url = f'http://localhost:5001{endpoint}'

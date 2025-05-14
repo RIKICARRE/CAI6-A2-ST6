@@ -25,8 +25,12 @@ sign_b64 = base64.b64encode(signature).decode()
 
 # Contexto del dispositivo
 context = {
+    "roles": ["médico"],
     "devicePosture": "compliant",
-    "location": "hospital"
+    "networkZone": "intranet",
+    "timeOfDay": ["08:00-20:00"],
+    "hasAppointment": True,
+    "certificateValid": True
 }
 
 # Solicitar recurso protegido

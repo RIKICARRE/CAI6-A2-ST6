@@ -1,10 +1,13 @@
 {
-    "allowed_clients": [
-      {
-        "cn": "Client1",
-        "roles": ["user"],
-        "devicePosture": "compliant",
-        "location": "hospital"
-      }
-    ]
-  }
+  "allowed_clients": [
+    {
+      "cn": "Client1",
+      "roles": ["médico"],
+      "devicePosture": "compliant",
+      "networkZone": "intranet",
+      "timeOfDay": ["08:00-22:00"],
+      "hasAppointment": true,
+      "certificateValid": true
+    }
+  ]
+}
